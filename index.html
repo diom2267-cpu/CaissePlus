@@ -256,9 +256,28 @@ h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
   padding:0 16px; border-radius:10px; border:none; background:var(--deep); color:#fff; font-weight:600;
 }
 
+/* ---------- Boutons supprimer / réinitialiser ---------- */
+.entry-del{
+  margin-top:10px; background:none; border:1px solid var(--line);
+  color:var(--rust); font-size:12.5px; padding:6px 12px;
+  border-radius:8px; cursor:pointer;
+}
+.danger-zone{
+  margin-top:26px; padding:14px; border:1px solid var(--rust);
+  border-radius:12px; background:#FBF1EA;
+}
+.danger-zone h4{ margin:0 0 4px; color:var(--rust); font-size:14px; }
+.danger-zone p{ margin:0 0 12px; font-size:12.5px; color:var(--ink-soft); }
+.danger-btn{
+  width:100%; padding:12px; border-radius:10px; border:1px solid var(--rust);
+  background:#fff; color:var(--rust); font-weight:600; font-size:14px;
+  cursor:pointer; margin-bottom:8px;
+}
+.danger-btn.plein{ background:var(--rust); color:#fff; }
+
 /* ---------- Print / rapport ---------- */
 @media print{
-  .topbar, .fab, .bottom-nav, .filters, .section-title .count { display:none !important; }
+  .topbar, .fab, .bottom-nav, .filters, .section-title .count, .entry-del { display:none !important; }
   body{ padding:0; background:#fff; }
   .content{ max-width:100%; }
   .entry{ break-inside:avoid; }
@@ -377,6 +396,13 @@ h1,h2,h3,.serif{ font-family:'Fraunces', serif; }
       </div>
     </div>
 
+    <div class="danger-zone">
+      <h4>⚠️ Zone sensible</h4>
+      <p>Ces actions sont définitives. Elles ne touchent que cet appareil.</p>
+      <button class="danger-btn" onclick="supprimerToutesOperations()">Supprimer toutes les opérations</button>
+      <button class="danger-btn plein" onclick="reinitialiserApp()">Réinitialiser toute l'application</button>
+    </div>
+
     <button class="cancel-link" id="closeGerer">Fermer</button>
   </div>
 </div>
@@ -466,6 +492,7 @@ function renderList(){
       </div>
       ${e.note ? `<div class="entry-note">${e.note}</div>` : ''}
       ${e.photo ? `<div class="receipt-badge">📎 Preuve jointe</div>` : ''}
+      <button class="entry-del" onclick="supprimerOperation(${e.id})">🗑️ Supprimer</button>
     </div>`;
   }).join('');
 }
@@ -484,6 +511,34 @@ function renderGererLists(){
   document.getElementById('listCats').innerHTML = data.categories.map((c,i)=>
     `<div class="manage-row"><span>${c}</span>${data.categories.length>1?`<button onclick="removeCat(${i})">Retirer</button>`:''}</div>`
   ).join('');
+}
+
+// ---------- Suppression / réinitialisation ----------
+function supprimerOperation(id){
+  if(!confirm("Supprimer cette opération ? Cette action est définitive.")) return;
+  data.entries = data.entries.filter(e => e.id !== id);
+  save();
+  renderAll();
+}
+
+function supprimerToutesOperations(){
+  if(!confirm("Supprimer TOUTES les opérations ? Les biens et catégories seront conservés.")) return;
+  data.entries = [];
+  save();
+  renderAll();
+  document.getElementById('overlayGerer').classList.remove('show');
+}
+
+function reinitialiserApp(){
+  if(!confirm("Réinitialiser toute l'application ? Opérations, biens et catégories seront remis à zéro.")) return;
+  if(!confirm("Dernière confirmation : tout sera effacé. Continuer ?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  data = defaultData();
+  currentBien = "Tous";
+  currentCatFilter = "Toutes";
+  save();
+  renderAll();
+  document.getElementById('overlayGerer').classList.remove('show');
 }
 
 function removeBien(i){ data.biens.splice(i,1); save(); renderGererLists(); renderBienTabs(); renderSelects(); }
